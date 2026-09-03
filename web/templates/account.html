@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Account — Catalogue{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1 class="page-title">Your account</h1>
+
+  {% if first %}
+  <div class="warn-box">This is your first sign-in. Please choose your own password
+    before continuing.</div>
+  {% endif %}
+  {% if message %}<div class="ok-box">{{ message }}</div>{% endif %}
+  {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+  <div class="facts">
+    <dl>
+      <div><dt>Username</dt><dd class="mono">{{ user.username }}</dd></div>
+      <div><dt>Name</dt><dd>{{ user.full_name or '—' }}</dd></div>
+      <div><dt>Email</dt><dd>{{ user.email or '—' }}</dd></div>
+      <div><dt>Role</dt><dd>{{ 'Administrator' if user.role == 'admin' else 'User' }}</dd></div>
+      <div><dt>Last sign-in</dt><dd>{{ (user.last_login or '—')[:16].replace('T',' ') }}</dd></div>
+      <div><dt>Total sign-ins</dt><dd>{{ user.login_count }}</dd></div>
+    </dl>
+  </div>
+
+  <section>
+    <h2>Change password</h2>
+    <form method="post" action="/account" class="stacked-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Current password
+        <input type="password" name="current" autocomplete="current-password" required></label>
+      <label>New password <span class="muted">(at least 10 characters)</span>
+        <input type="password" name="new" autocomplete="new-password" minlength="10" required></label>
+      <label>New password (repeat)
+        <input type="password" name="repeat" autocomplete="new-password" minlength="10" required></label>
+      <button type="submit">Update password</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

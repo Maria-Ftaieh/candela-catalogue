@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form class="search" method="get" action="/">
+  <input type="hidden" name="lang" value="{{ lang }}">
+  <input class="q" type="search" name="q" value="{{ q }}" autofocus
+         placeholder="Search by article number, EAN, series or description… (e.g. Lumega, 6000868600, 4069072111515)">
+  <button type="submit">Search</button>
+
+  <details class="filters" {% if f.series or f.etim or f.status or f.doc or f.catalog or f.brand or f.pmin or f.pmax %}open{% endif %}>
+    <summary>Filters</summary>
+    <div class="filter-grid">
+      {% if brands|length > 1 %}
+      <label>Brand
+        <select name="brand">
+          <option value="">— all —</option>
+          {% for b in brands %}
+          <option value="{{ b.code }}" {% if f.brand==b.code %}selected{% endif %}>{{ b.name }} ({{ b.products }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <label>Product series
+        <select name="series">
+          <option value="">— all —</option>
+          {% for s in series_list %}
+          <option value="{{ s.name }}" {% if f.series==s.name %}selected{% endif %}>{{ s.name|series_name }} ({{ s.n }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Has document
+        <select name="doc">
+          <option value="">— all —</option>
+          {% for d in doc_types %}
+          <option value="{{ d.code }}" {% if f.doc==d.code %}selected{% endif %}>{{ d.label }} ({{ d.n }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Catalogue
+        <select name="catalog">
+          <option value="">— all —</option>
+          <option value="1" {% if f.catalog %}selected{% endif %}>Only with a catalogue</option>
+        </select>
+      </label>
+      <label>ETIM class
+        <input type="text" name="etim" value="{{ f.etim or '' }}" placeholder="EC002557">
+      </label>
+      <label>Status
+        <select name="status">
+          <option value="">— all —</option>
+          <option value="Aktiv" {% if f.status=='Aktiv' %}selected{% endif %}>Active</option>
+        </select>
+      </label>
+      <label>Price ≥
+        <input type="number" name="pmin" step="0.01" value="{{ f.pmin if f.pmin is not none else '' }}">
+      </label>
+      <label>Price ≤
+        <input type="number" name="pmax" step="0.01" value="{{ f.pmax if f.pmax is not none else '' }}">
+      </label>
+    </div>
+    <div class="filter-actions">
+      <button type="submit">Apply</button>
+      <a href="/?q={{ q|urlencode }}&amp;lang={{ lang }}">Clear filters</a>
+    </div>
+  </details>
+</form>
+
+<div class="tabs">
+  <span class="tab active">Products <b>{{ '{:,}'.format(total) }}</b></span>
+  {% if documents %}<a class="tab" href="/documents?q={{ q|urlencode }}">Documents <b>{{ documents|length }}</b></a>{% endif %}
+  {% if total %}
+  <a class="export" href="/export.csv?{{ request.query_params }}">↓ Download CSV
+    {% if total > 5000 %}(first 5,000){% endif %}</a>
+  {% endif %}
+</div>
+
+{% if not total %}
+  <p class="empty">{% if q %}No products found for "{{ q }}".
+    Try typing part of the word — the search matches prefixes.
+    {% else %}Type something above to start searching.{% endif %}</p>
+{% else %}
+<table class="results">
+  <thead><tr>
+    {% if brands|length > 1 %}<th>Brand</th>{% endif %}
+    <th>Article no</th><th>Title</th><th>Series</th><th>EAN</th>
+    <th class="right">Price</th><th>Status</th>
+  </tr></thead>
+  <tbody>
+  {% for p in products %}
+    <tr>
+      {% if brands|length > 1 %}<td><span class="badge">{{ brand_names.get(p.brand, p.brand) }}</span></td>{% endif %}
+      <td><a class="pid" href="/product/{{ p.supplier_pid }}?lang={{ lang }}&amp;brand={{ p.brand }}">{{ p.supplier_pid }}</a></td>
+      <td>{{ p.title or p.type_name or '—' }}</td>
+      <td>{{ p.series|series_name if p.series else '—' }}</td>
+      <td class="mono">{{ p.gtin or '—' }}</td>
+      <td class="right">{% if p.price_amount is not none %}{{ '%.2f'|format(p.price_amount) }} {{ p.price_currency }}{% else %}—{% endif %}</td>
+      <td>{% if p.status=='Aktiv' %}<span class="badge ok">Active</span>{% else %}{{ p.status or '—' }}{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if last_page > 1 %}
+<nav class="pager">
+  {% if page > 1 %}<a href="?{{ request.query_params|set_page(page-1) }}">← Previous</a>{% endif %}
+  <span>Page {{ page }} of {{ '{:,}'.format(last_page) }}</span>
+  {% if page < last_page %}<a href="?{{ request.query_params|set_page(page+1) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,11 @@
+# /etc/systemd/system/enda-update.service
+[Unit]
+Description=Download the manufacturer data package and rebuild the database
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/enda
+ExecStart=/opt/enda/.venv/bin/python etl/fetch_trilux.py --rebuild
+TimeoutStartSec=3600

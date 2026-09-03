@@ -1,0 +1,6 @@
+{
+  "name": "TRILUX",
+  "colour": "#003d6b",
+  "site": "https://www.trilux.com",
+  "note": "Product data in BMEcat 2005 / ETIM 10.0 format; etl/fetch_trilux.py downloads it."
+}

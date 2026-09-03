@@ -1,0 +1,11 @@
+# /etc/systemd/system/enda-update.timer
+[Unit]
+Description=Check for a new data package once a month
+
+[Timer]
+OnCalendar=*-*-05 04:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

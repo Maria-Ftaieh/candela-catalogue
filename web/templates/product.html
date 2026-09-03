@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}{{ p.supplier_pid }} — Catalogue{% endblock %}
+{% set title = (p.short_en if lang=='en' else p.short_de) or p.short_en or p.short_de %}
+{% set description = (p.long_en if lang=='en' else p.long_de) or p.long_en or p.long_de %}
+{% set series = (p.series_en if lang=='en' else p.series_de) or p.series_en %}
+{% block content %}
+
+<p class="back"><a href="/" data-back>← Back to results</a></p>
+
+<article class="product">
+  <header class="product-head">
+    <div>
+      <div class="pid-large">{{ p.supplier_pid }}</div>
+      <h1>{{ title or '—' }}</h1>
+      <p class="sub">
+        {% if series %}Series: <b>{{ series|series_name }}</b> · {% endif %}
+        {% if p.type_descr_en %}{{ p.type_descr_en }} · {% endif %}
+        {% if p.status=='Aktiv' %}<span class="badge ok">Active</span>{% endif %}
+      </p>
+    </div>
+    {% if p.price_amount is not none %}
+    <div class="price-box">
+      <div class="price">{{ '%.2f'|format(p.price_amount) }} {{ p.price_currency }}</div>
+      <div class="price-note">gross list · {{ p.price_territory or '—' }}<br>valid from {{ p.price_valid_from or '—' }}</div>
+    </div>
+    {% endif %}
+  </header>
+
+  <section class="facts">
+    <dl>
+      <div><dt>Brand</dt><dd><b>{{ brand_names.get(p.brand, p.brand) }}</b></dd></div>
+      <div><dt>EAN / GTIN</dt><dd class="mono">{{ p.gtin or '—' }}</dd></div>
+      <div><dt>Alternative no</dt><dd class="mono">{{ p.alt_pid or '—' }}</dd></div>
+      <div><dt>ETIM class</dt><dd class="mono">{{ p.etim_class or '—' }} <span class="muted">({{ p.etim_system or '' }})</span></dd></div>
+      <div><dt>Discount group</dt><dd>{{ p.discount_group or '—' }}</dd></div>
+      <div><dt>Net weight</dt><dd>{% if p.net_weight %}{{ p.net_weight }} kg{% else %}—{% endif %}</dd></div>
+      <div><dt>Size (L×W×D)</dt><dd>{% if p.pack_length %}{{ p.pack_length }} × {{ p.pack_width }} × {{ p.pack_depth }} m{% else %}—{% endif %}</dd></div>
+      <div><dt>Country of origin</dt><dd>{{ p.country_of_origin or '—' }}</dd></div>
+      <div><dt>Customs code</dt><dd class="mono">{{ p.customs_number or '—' }}</dd></div>
+      <div><dt>Order unit</dt><dd>{{ p.order_unit or '—' }} · min {{ p.quantity_min or '—' }}</dd></div>
+      <div><dt>Warranty</dt><dd>{% if p.warranty_business %}{{ p.warranty_business }} months (business){% else %}—{% endif %}</dd></div>
+      <div><dt>RoHS</dt><dd>{{ '✓' if p.rohs else '—' }}</dd></div>
+      <div><dt>CE marking</dt><dd>{{ '✓' if p.ce_marking else '—' }}</dd></div>
+      <div><dt>REACH</dt><dd>{{ p.reach_info or '—' }} <span class="muted">{{ p.reach_listdate or '' }}</span></dd></div>
+      <div><dt>Valid from</dt><dd>{{ p.valid_from or '—' }}</dd></div>
+    </dl>
+  </section>
+
+  {% if description %}
+  <section>
+    <h2>Description</h2>
+    <p class="description">{{ description }}</p>
+  </section>
+  {% endif %}
+
+  {% if images %}
+  <section>
+    <h2>Images <span class="muted">({{ images|length }})</span></h2>
+    <div class="gallery">
+    {% for g in images %}
+      <figure class="gallery-item">
+        <a href="{{ g.full }}" target="_blank" rel="noopener" title="Open full size">
+          <img src="{{ g.source }}" alt="{{ g.label }}" loading="lazy" decoding="async">
+        </a>
+        <figcaption>{{ g.label }}</figcaption>
+      </figure>
+    {% endfor %}
+    </div>
+    <p class="note">Images are loaded from {{ brand_names.get(p.brand, p.brand) }}'s own
+      servers, so an internet connection is needed to view them. Click to open the full
+      size; the downloadable file list is below.</p>
+  </section>
+  {% endif %}
+
+  {% if catalogues %}
+  <section>
+    <h2>Catalogues and brochures <span class="muted">({{ catalogues|length }})</span></h2>
+    <p class="note">This product's series ({{ p.series_en|series_name }}) appears in the
+      documents below. Clicking the page number opens the PDF at that page.</p>
+    <ul class="catalogue-list">
+    {% for c in catalogues %}
+      <li>
+        <div class="cat-head">
+          <a href="/document/{{ c.doc_id }}{% if c.first_page %}#page={{ c.first_page }}{% endif %}"
+             target="_blank" rel="noopener">{{ c.title }}</a>
+          <span class="badge">{{ c.category }}</span>
+          {% if c.strength == 'primary' %}<span class="badge primary">main subject</span>{% endif %}
+        </div>
+        <div class="muted">
+          appears on {{ c.page_count }} pages{% if c.total_pages %} of {{ c.total_pages }}{% endif %}
+          {% if c.pages %}· pages {{ c.pages }}{% endif %}
+        </div>
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if file_groups %}
+  <section>
+    <h2>Documents and files <span class="muted">({{ file_groups.values()|map('length')|sum }} links)</span></h2>
+    <p class="note">The links point at the manufacturer's own servers.
+      For company-wide documents (ISO, CE, RoHS, REACH) see <a href="/documents">Documents</a>.</p>
+    <div class="file-grid">
+    {% for label, items in file_groups.items() %}
+      <div class="file-group">
+        <h3>{{ label }}</h3>
+        <ul>
+        {% for d in items %}
+          <li>
+            <a href="{{ d.source }}" target="_blank" rel="noopener">
+              {{ d.filename or d.designation or d.code }}</a>
+            {% if d.lang %}<span class="badge lang-tag">{{ d.lang }}</span>{% endif %}
+            {% if d.issue_date %}<span class="muted">{{ d.issue_date }}</span>{% endif %}
+          </li>
+        {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if features %}
+  <section>
+    <h2>ETIM technical features <span class="muted">({{ features|length }})</span></h2>
+    <p class="note">Feature and value names arrive as codes in the manufacturer's file.
+      Turning them into readable labels needs the ETIM 10.0 dictionary — see the README.</p>
+    <table class="attrs">
+      <thead><tr><th>Feature code</th><th>Value</th><th>Unit</th></tr></thead>
+      <tbody>
+      {% for f in features %}
+        <tr><td class="mono">{{ f.fname }}</td>
+            <td class="mono">{{ f.fvalue if f.fvalue not in (None,'-') else '—' }}
+              {% if f.details %}<span class="muted">{{ f.details }}</span>{% endif %}</td>
+            <td>{{ f.funit or '' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if accessories %}
+  <section>
+    <h2>Accessories <span class="muted">({{ accessories|length }})</span></h2>
+    <ul class="related">
+      {% for a in accessories %}
+      <li><a href="/product/{{ a.prod_id_to }}?lang={{ lang }}&amp;brand={{ p.brand }}" class="mono">{{ a.prod_id_to }}</a>
+        <span>{{ (a.short_en if lang=='en' else a.short_de) or a.short_en or a.descr or '' }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if similar %}
+  <section>
+    <h2>Similar products <span class="muted">({{ similar|length }})</span></h2>
+    <ul class="related">
+      {% for a in similar %}
+      <li><a href="/product/{{ a.prod_id_to }}?lang={{ lang }}&amp;brand={{ p.brand }}" class="mono">{{ a.prod_id_to }}</a>
+        <span>{{ (a.short_en if lang=='en' else a.short_de) or a.short_en or '' }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if used_by %}
+  <section>
+    <h2>Used as an accessory by <span class="muted">({{ used_by|length }})</span></h2>
+    <ul class="related">
+      {% for a in used_by %}
+      <li><a href="/product/{{ a.supplier_pid }}?lang={{ lang }}&amp;brand={{ p.brand }}" class="mono">{{ a.supplier_pid }}</a>
+        <span>{{ (a.short_en if lang=='en' else a.short_de) or a.short_en or '' }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if packing %}
+  <section>
+    <h2>Packaging</h2>
+    <table class="attrs">
+      <thead><tr><th>Type</th><th>Quantity</th><th>Weight</th><th>Volume</th><th>Size (m)</th><th>GTIN</th></tr></thead>
+      <tbody>
+      {% for a in packing %}
+        <tr><td>{{ a.code }}</td><td>{{ a.qty_min }}{% if a.qty_max != a.qty_min %}–{{ a.qty_max }}{% endif %}</td>
+            <td>{{ a.weight }} kg</td><td>{{ a.volume }} m³</td>
+            <td>{{ a.length }} × {{ a.width }} × {{ a.depth }}</td>
+            <td class="mono">{{ a.gtin or '—' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if prices|length > 1 %}
+  <section>
+    <h2>Price tiers</h2>
+    <table class="attrs">
+      <thead><tr><th>From quantity</th><th>Price</th><th>VAT</th><th>Territory</th></tr></thead>
+      <tbody>
+      {% for f in prices %}
+        <tr><td>{{ f.lower_bound }}</td><td>{{ '%.2f'|format(f.amount) }} {{ f.currency }}</td>
+            <td>{{ (f.tax*100)|round|int if f.tax else '—' }}%</td><td>{{ f.territory }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+</article>
+{% endblock %}

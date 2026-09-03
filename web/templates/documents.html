@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Documents — Catalogue{% endblock %}
+{% block content %}
+
+<form class="search" method="get" action="/documents">
+  <input class="q" type="search" name="q" value="{{ q }}"
+         placeholder="Search inside the documents… (e.g. ISO 9001, REACH, BREEAM, warranty)">
+  <button type="submit">Search</button>
+</form>
+
+<p class="note">
+  Searches the <b>contents</b> of the local PDFs. Product-specific documents
+  (data sheets, CE declarations, installation instructions) live on the product page.
+</p>
+
+<div class="categories">
+  {% if brands|length > 1 %}
+    <a class="badge {% if not brand %}primary{% endif %}" href="/documents?q={{ q|urlencode }}">All brands</a>
+    {% for b in brands %}
+    <a class="badge {% if brand==b.code %}primary{% endif %}"
+       href="/documents?q={{ q|urlencode }}&amp;brand={{ b.code }}">{{ b.name }} · {{ b.documents }}</a>
+    {% endfor %}
+    <span class="muted">|</span>
+  {% endif %}
+  {% for c in categories %}<span class="badge">{{ c.category }} · {{ c.n }}</span>{% endfor %}
+</div>
+
+{% if not documents %}
+  <p class="empty">No documents found for "{{ q }}".</p>
+{% else %}
+<ul class="doc-list">
+  {% for d in documents %}
+  <li>
+    <div class="doc-head">
+      <a href="/document/{{ d.id }}" target="_blank" rel="noopener">{{ d.title }}</a>
+      {% if brands|length > 1 %}<span class="badge">{{ brand_names.get(d.brand, d.brand) }}</span>{% endif %}
+      <span class="badge">{{ d.category }}</span>
+      {% if d.sha1 in duplicates %}<span class="badge duplicate" title="An identical copy of this file exists in another folder">duplicate</span>{% endif %}
+    </div>
+    <div class="muted mono">{{ d.filename }} · {{ d.pages or '?' }} pages · {{ (d.bytes/1048576)|round(1) }} MB
+      · <a href="/document/{{ d.id }}?download=1">download</a></div>
+    {% if d.excerpt %}<div class="excerpt">{{ d.excerpt|safe }}</div>{% endif %}
+    {% set series = doc_series.get(d.id) %}
+    {% if series %}
+    <div class="series-badges">
+      <span class="muted">Product series inside:</span>
+      {% for s in series[:14] %}
+      <a class="badge series {% if s.strength=='primary' %}primary{% endif %}"
+         href="/?series={{ s.series|urlencode }}"
+         title="appears on {{ s.page_count }} pages · {{ s.products }} products">{{ s.series|series_name }} <b>{{ s.products }}</b></a>
+      {% endfor %}
+      {% if series|length > 14 %}<span class="muted">+{{ series|length - 14 }} more</span>{% endif %}
+    </div>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+# --- Secrets --------------------------------------------------------------
+# User accounts (scrypt password hashes) and the CSRF key never enter the repo.
+data/users.db
+data/users.db-*
+data/.secret_key
+*.env
+!examples/*.env.example
+
+# --- Generated data -------------------------------------------------------
+# The database is rebuilt by the ETL; it is over 1 GB and contains the
+# manufacturer's licensed data.
+data/*.db
+data/*.db-*
+data/*.tmp
+
+# --- Brand data and documents --------------------------------------------
+# BMEcat XML files and PDF catalogues belong to the manufacturers and are not
+# redistributed here. The directory structure is kept, the content is not.
+# NOTE: do not add a rule like "!.../documents/*/" that re-includes a
+# subdirectory — it would pull every PDF inside it back in.
+brands/*/data/*
+brands/*/documents/*
+!brands/*/data/.gitkeep
+!brands/*/documents/.gitkeep
+
+# --- Environment ----------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# --- System ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
+*.swp

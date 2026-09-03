@@ -1,0 +1,30 @@
+# /etc/caddy/Caddyfile
+# The app listens on 127.0.0.1:8000; Caddy is the only door to the outside.
+# Certificates are obtained from Let's Encrypt and renewed automatically.
+
+catalogue.example.com {
+	encode zstd gzip
+
+	# Authentication lives in the application itself (web/auth.py) — no basic auth here.
+	reverse_proxy 127.0.0.1:8000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "DENY"
+		# img-src https: lets product photos load from the manufacturer's servers.
+		# Scripts and styles are same-origin only; there is no inline code.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}

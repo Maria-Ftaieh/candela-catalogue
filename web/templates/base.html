@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Catalogue{% endblock %}</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header>
+  <div class="bar-inner">
+    <a class="brand" href="/">ENDA <span>Catalogue</span></a>
+    <nav>
+      <a href="/">Products</a>
+      <a href="/documents">Documents</a>
+    </nav>
+    <div class="lang" title="Language of the product texts">
+      <a href="?{{ request.query_params|replace_lang('en') }}" class="{% if lang=='en' %}active{% endif %}">EN</a>
+      <a href="?{{ request.query_params|replace_lang('de') }}" class="{% if lang=='de' %}active{% endif %}">DE</a>
+    </div>
+    {% if user %}
+    <div class="account">
+      {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
+      <a href="/account" title="{{ user.full_name or user.username }}">{{ user.username }}</a>
+      <form method="post" action="/logout"><button type="submit">Sign out</button></form>
+    </div>
+    {% endif %}
+  </div>
+</header>
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  <div>
+    {{ info.get('PRODUCT_COUNT','?') }} products · {{ info.get('BRAND_COUNT','1') }} brand(s)
+    · imported {{ info.get('IMPORTED_AT','?')[:10] }}
+    {% if brands %}<br>{% for b in brands %}<span class="foot-brand">{{ b.name }}{% if b.version %}
+      catalogue {{ b.version }}{% endif %} · {{ b.products }} products</span>{% endfor %}{% endif %}
+  </div>
+  <div class="notice">
+    Prices are the manufacturer's gross list prices for dealers <b>in its own
+    market</b> (excluding VAT; for TRILUX that is Germany and Austria, valid from
+    {{ info.get('PRICE_VALID','—') }}). They are indicative and not binding.
+  </div>
+</footer>
+</body>
+</html>

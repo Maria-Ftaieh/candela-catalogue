@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}User administration — Catalogue{% endblock %}
+{% block content %}
+<h1 class="page-title">User administration</h1>
+
+{% if message %}<div class="ok-box">{{ message }}</div>{% endif %}
+{% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+{% if new_password %}
+<div class="password-box">
+  <div class="muted">Pass these on to the person — the password will not be shown again.</div>
+  <div class="password-row">
+    <span>username</span><code>{{ new_username }}</code>
+    <span>password</span><code>{{ new_password }}</code>
+  </div>
+  <div class="muted">They will have to choose their own password on first sign-in.</div>
+</div>
+{% endif %}
+
+<section>
+  <h2>Data update <span class="muted">(automatic download)</span></h2>
+  {% if update %}
+  <div class="facts">
+    <dl>
+      <div><dt>Last check</dt>
+        <dd>{{ (update.get('last_check') or '—')[:16].replace('T',' ') }}</dd></div>
+      <div><dt>Package on portal</dt>
+        <dd class="mono">{{ update.get('portal_file') or '—' }}</dd></div>
+      <div><dt>New version</dt>
+        <dd>{% if update.get('new_available') %}<span class="badge primary">available</span>
+            {% else %}<span class="badge ok">up to date</span>{% endif %}</dd></div>
+      <div><dt>Last download</dt>
+        <dd>{{ (update.get('last_download') or '—')[:16].replace('T',' ') }}</dd></div>
+      <div><dt>Last rebuild</dt>
+        <dd>{{ (update.get('last_rebuild') or '—')[:16].replace('T',' ') }}</dd></div>
+      <div><dt>Portal session</dt>
+        <dd>{{ (update.get('session_date') or 'none')[:16].replace('T',' ') }}</dd></div>
+    </dl>
+  </div>
+  {% if update.get('consecutive_failures', 0) %}
+  <div class="error-box spaced">
+    Signing in to the manufacturer portal failed {{ update.consecutive_failures }} times
+    in a row ({{ update.get('last_error') or 'reason unknown' }}).
+    Automatic attempts have been stopped so the account cannot be locked. Verify the
+    password by hand, then run <code>.venv/bin/python etl/fetch_trilux.py --reset</code>
+    on the server.
+  </div>
+  {% endif %}
+  <p class="note">The check runs automatically on the 5th of each month
+    (<code>enda-update.timer</code>). To run it by hand:
+    <code>.venv/bin/python etl/fetch_trilux.py --rebuild</code></p>
+  {% else %}
+  <p class="note">The automatic update has not run yet.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>New account</h2>
+  <form method="post" action="/admin/add" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Username
+      <input name="username" placeholder="jane.smith" autocapitalize="none"
+             spellcheck="false" required></label>
+    <label>Full name <input name="full_name" placeholder="Jane Smith"></label>
+    <label>Email <input name="email" type="email" placeholder="optional"></label>
+    <label>Role
+      <select name="role">
+        <option value="user">User</option>
+        <option value="admin">Administrator</option>
+      </select></label>
+    <label>Password <span class="muted">(generated if left blank)</span>
+      <input name="password" placeholder="{{ suggested }}"></label>
+    <button type="submit">Create account</button>
+  </form>
+</section>
+
+<section>
+  <h2>Accounts <span class="muted">({{ users|length }})</span></h2>
+  <table class="results">
+    <thead><tr>
+      <th>User</th><th>Name</th><th>Role</th><th>Status</th>
+      <th>Last sign-in</th><th>Sessions</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td class="mono">{{ u.username }}{% if u.id == user.id %}
+          <span class="badge">you</span>{% endif %}</td>
+        <td>{{ u.full_name or '—' }}<br><span class="muted">{{ u.email or '' }}</span></td>
+        <td>{% if u.role == 'admin' %}<span class="badge primary">Administrator</span>
+            {% else %}<span class="muted">User</span>{% endif %}</td>
+        <td>{% if u.active %}<span class="badge ok">Active</span>
+            {% else %}<span class="badge duplicate">Disabled</span>{% endif %}
+            {% if u.must_change %}<br><span class="muted">password pending</span>{% endif %}</td>
+        <td class="muted">{{ (u.last_login or '—')[:16].replace('T',' ') }}</td>
+        <td class="muted">{{ u.open_sessions }}</td>
+        <td class="actions">
+          <form method="post" action="/admin/{{ u.id }}/action">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button name="action" value="password" class="mini">Reset password</button>
+            {% if u.active %}
+              <button name="action" value="disable" class="mini">Disable</button>
+            {% else %}
+              <button name="action" value="enable" class="mini">Enable</button>
+            {% endif %}
+            {% if u.role == 'admin' %}
+              <button name="action" value="role" class="mini">Remove admin</button>
+              <input type="hidden" name="role" value="user">
+            {% else %}
+              <button name="action" value="role" class="mini">Make admin</button>
+              <input type="hidden" name="role" value="admin">
+            {% endif %}
+            <button name="action" value="signout" class="mini">Sign out</button>
+            {% if u.id != user.id %}
+              <button name="action" value="delete" class="mini danger"
+                      data-confirm="Delete {{ u.username }}? This cannot be undone.">Delete</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

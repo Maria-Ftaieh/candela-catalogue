@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Sign in — Catalogue</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+  <main class="login-wrap">
+    <div class="login-card">
+      <h1>ENDA <span>Catalogue</span></h1>
+      <p class="login-sub">Sign in to continue.</p>
+
+      {% if setup %}
+      <div class="warn-box">
+        No administrator account exists yet. On the server, run:
+        <code>.venv/bin/python etl/users.py add --admin &lt;username&gt;</code>
+      </div>
+      {% endif %}
+
+      {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+      <form method="post" action="/login">
+        <input type="hidden" name="next" value="{{ next }}">
+        <label>Username
+          <input name="username" value="{{ username or '' }}"
+                 autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required>
+        </label>
+        <label>Password
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Sign in</button>
+      </form>
+
+      <p class="login-note">No account? Ask your administrator for one.</p>
+    </div>
+    <p class="login-foot">Catalogue {{ info.get('CATALOG_VERSION','?') }} · {{ info.get('PRODUCT_COUNT','?') }} products</p>
+  </main>
+</body>
+</html>
