@@ -13,6 +13,8 @@ over 30,000 products with roughly 88 technical attributes each. Excel will not o
 it is not searchable, and the documents live somewhere else entirely. This tool turns
 it into a searchable database in about a minute.
 
+![Search results](docs/search.png)
+
 ---
 
 ## Contents
@@ -49,6 +51,29 @@ it into a searchable database in about a minute.
 - **Bilingual product data:** the source feed carries German and English text; both are
   stored and a EN/DE switch in the header changes which one is displayed.
 - CSV export, a JSON API, per-person accounts and role management.
+
+### Screenshots
+
+**Product page** — key facts, embedded images, and the catalogues the product's series
+appears in, down to the page number:
+
+![Product page](docs/product.png)
+
+**Document search** — searches inside the PDFs, with highlighted excerpts and the
+product series each document covers:
+
+![Document search](docs/documents.png)
+
+**Dark mode** — follows the operating system setting, no toggle needed:
+
+![Dark mode](docs/dark-mode.png)
+
+**Administration** — accounts, roles and the status of the automatic data update:
+
+![Administration](docs/admin.png)
+
+> The screenshots show real catalogue rows from a TRILUX feed, prices included. They
+> are illustrative only; see [About the prices](#about-the-prices).
 
 ---
 
