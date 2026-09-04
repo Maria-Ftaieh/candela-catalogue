@@ -40,6 +40,9 @@ def main():
     a.add_argument("--email", default="")
     a.add_argument("--admin", action="store_true")
     a.add_argument("--password", default="", help="generated when omitted")
+    a.add_argument("--no-password-change", action="store_true",
+                   help="do not force a password change on first sign-in "
+                        "(used for demo accounts)")
 
     p = sub.add_parser("password", help="reset a password")
     p.add_argument("username")
@@ -86,7 +89,8 @@ def main():
         try:
             auth.add_user(args.username, password, args.name, args.email,
                           "admin" if args.admin else "user",
-                          created_by="command line")
+                          created_by="command line",
+                          must_change=0 if args.no_password_change else 1)
         except ValueError as e:
             sys.exit(f"Error: {e}")
         print(f"'{args.username.lower()}' created"

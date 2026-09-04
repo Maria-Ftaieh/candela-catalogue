@@ -61,6 +61,12 @@ WEB = os.path.join(ROOT, "web")
 PAGE_SIZE = 50
 CSV_MAX = 5000
 
+# Public demo instance: credentials are shown on the sign-in page and every
+# destructive action is refused, so a visitor cannot lock the demo for everyone.
+DEMO_MODE = os.environ.get("DEMO_MODE", "").lower() not in ("", "0", "false", "no")
+DEMO_USER = os.environ.get("DEMO_USER", "demo")
+DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD", "demo1234demo")
+
 app = FastAPI(title="Catalogue", docs_url="/api/docs", redoc_url=None)
 app.mount("/static", StaticFiles(directory=os.path.join(WEB, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(WEB, "templates"))
@@ -434,6 +440,7 @@ def common(request, lang):
     token = getattr(request.state, "token", None)
     return {"request": request, "lang": lang, "info": catalogue_info(),
             "user": current_user(request),
+            "demo_mode": DEMO_MODE,
             "csrf": auth.csrf_token(token)}
 
 
@@ -612,7 +619,9 @@ def login_page(request: Request, next: str = "/", error: str = ""):
         return RedirectResponse(next or "/", status_code=303)
     return templates.TemplateResponse(request, "login.html", {
         "request": request, "next": next, "error": error,
-        "info": catalogue_info(), "setup": auth.admin_count() == 0})
+        "info": catalogue_info(), "setup": auth.admin_count() == 0,
+        "demo_mode": DEMO_MODE, "demo_user": DEMO_USER,
+        "demo_password": DEMO_PASSWORD})
 
 
 @app.post("/login")
@@ -626,7 +635,9 @@ async def do_login(request: Request, username: str = Form(""),
         return templates.TemplateResponse(request, "login.html", {
             "request": request, "next": next, "error": error,
             "username": username, "info": catalogue_info(),
-            "setup": auth.admin_count() == 0}, status_code=401)
+            "setup": auth.admin_count() == 0, "demo_mode": DEMO_MODE,
+            "demo_user": DEMO_USER, "demo_password": DEMO_PASSWORD},
+            status_code=401)
 
     token = await run_in_threadpool(auth.start_session, u["id"], ip,
                                     request.headers.get("user-agent", ""))
@@ -659,6 +670,8 @@ def account_save(request: Request, current: str = Form(""), new: str = Form(""),
     u = current_user(request)
     if not auth.csrf_valid(getattr(request.state, "token", None), csrf):
         raise HTTPException(400, "Session check failed, please reload the page.")
+    if DEMO_MODE:
+        return _blocked_in_demo("/account")
     if not auth.verify_password(current, u["password_hash"]):
         return RedirectResponse("/account?error=Current+password+is+wrong.",
                                 status_code=303)
@@ -716,12 +729,23 @@ def _require_csrf(request, csrf):
         raise HTTPException(400, "Session check failed, please reload the page.")
 
 
+DEMO_REFUSAL = ("This is a public demo — accounts cannot be changed here. "
+                "Everything else works as it would in a real installation.")
+
+
+def _blocked_in_demo(target="/admin"):
+    """Refuse a state-changing action on the public demo, politely."""
+    return RedirectResponse(f"{target}?error={quote(DEMO_REFUSAL)}", status_code=303)
+
+
 @app.post("/admin/add")
 def admin_add(request: Request, username: str = Form(""), full_name: str = Form(""),
               email: str = Form(""), role: str = Form("user"),
               password: str = Form(""), csrf: str = Form("")):
     me = require_admin(request)
     _require_csrf(request, csrf)
+    if DEMO_MODE:
+        return _blocked_in_demo()
     password = password.strip() or auth.generate_password()
     try:
         auth.add_user(username, password, full_name, email, role,
@@ -739,6 +763,8 @@ def admin_action(request: Request, uid: int, action: str = Form(""),
                  role: str = Form(""), csrf: str = Form("")):
     me = require_admin(request)
     _require_csrf(request, csrf)
+    if DEMO_MODE:
+        return _blocked_in_demo()
     target = auth.get_user_by_id(uid)
     if not target:
         raise HTTPException(404, "User not found.")

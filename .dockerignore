@@ -1,0 +1,10 @@
+.git
+.gitignore
+.venv
+data
+docs
+brands/*/data/*
+brands/*/documents/*
+__pycache__
+*.py[cod]
+*.log

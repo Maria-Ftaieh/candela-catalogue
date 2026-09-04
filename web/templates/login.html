@@ -20,12 +20,20 @@
       </div>
       {% endif %}
 
+      {% if demo_mode %}
+      <div class="demo-box">
+        <b>Public demo</b> — sign in with:
+        <span class="demo-cred"><code>{{ demo_user }}</code> <code>{{ demo_password }}</code></span>
+        All data is fictional.
+      </div>
+      {% endif %}
+
       {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
 
       <form method="post" action="/login">
         <input type="hidden" name="next" value="{{ next }}">
         <label>Username
-          <input name="username" value="{{ username or '' }}"
+          <input name="username" value="{{ username or (demo_user if demo_mode else '') }}"
                  autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required>
         </label>
         <label>Password

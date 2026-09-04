@@ -13,12 +13,45 @@ over 30,000 products with roughly 88 technical attributes each. Excel will not o
 it is not searchable, and the documents live somewhere else entirely. This tool turns
 it into a searchable database in about a minute.
 
+## Try it
+
+**Live demo: <https://demo.mariaftaieh.com>** — sign in with `demo` / `demo1234demo`.
+
+Or run your own copy in one command:
+
+```bash
+git clone https://github.com/Maria-Ftaieh/enda-catalogue-db.git
+cd enda-catalogue-db
+docker compose up
+```
+
+Then open <http://localhost:8000> and sign in with the same credentials.
+
+Both are filled with a **completely fictional** dataset — an invented brand
+("Lumina Demo"), 96 products across 8 made-up series, generated PDFs and placeholder
+images. No manufacturer's real data is involved. It is produced by
+[`examples/demo_data.py`](examples/demo_data.py), which you can read, run and modify:
+
+```bash
+python3 examples/demo_data.py          # write brands/demo/ and the placeholder images
+python3 examples/demo_data.py --clean  # remove them again
+```
+
+The first container start generates the data and builds the database (a minute or
+two); later starts reuse the volume and are immediate. If port 8000 is taken:
+`HOST_PORT=8080 docker compose up`.
+
+> The image deliberately leaves out Playwright/Chromium (~400 MB), so the automatic
+> download in `etl/fetch_trilux.py` does not work inside the container. Everything
+> else does.
+
 ![Search results](docs/search.png)
 
 ---
 
 ## Contents
 
+- [Try it](#try-it)
 - [What it does](#what-it-does)
 - [Input: what data it accepts](#input-what-data-it-accepts)
 - [Output: the database you get](#output-the-database-you-get)
@@ -202,6 +235,8 @@ ORDER BY bm25(product_fts) LIMIT 20;
 ---
 
 ## Installation
+
+The quickest path is [Docker](#try-it) above. What follows is a native install.
 
 Tested on **AlmaLinux 10** with Python 3.12. Package names differ on Debian/Ubuntu;
 everything else is the same.
@@ -412,6 +447,10 @@ configuration also sends HSTS, CSP and `X-Frame-Options`.
 The expensive password hash runs **after** the rate-limit checks, so the hashing cost
 cannot be turned into a denial-of-service lever.
 
+**Demo mode** (`DEMO_MODE=1`) is meant for a public instance: it prints the
+credentials on the sign-in page, shows a banner, and refuses every account change, so
+a visitor cannot lock the demo for everyone. Leave it off for a real installation.
+
 **Never committed** (see `.gitignore`): `data/users.db` (password hashes),
 `data/.secret_key`, `data/*.db`, `brands/*/data/*`, `brands/*/documents/*`, `*.env`.
 
@@ -447,6 +486,9 @@ price fields in `etl/build_db.py` and rebuild.
 ## Project layout
 
 ```
+Dockerfile           container image (no Playwright, see "Try it")
+docker-compose.yml   one-command demo
+docker/entrypoint.sh generates demo data, builds the database, creates the first admin
 etl/
   brands.py          discovers the brand directories (used by all three ETL scripts)
   schema.sql         table definitions
@@ -461,7 +503,10 @@ web/
   templates/         Jinja2 templates
   static/            styles and page behaviour (no CDN, no webfonts)
 brands/              per-brand data and document directories
-examples/            systemd, Caddy and environment file samples
+examples/
+  demo_data.py       generates the fictional demo dataset
+  *.service, *.timer systemd unit samples
+  Caddyfile.example  reverse proxy sample
 data/                generated databases (never committed)
 ```
 
