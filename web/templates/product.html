@@ -66,9 +66,15 @@
       </figure>
     {% endfor %}
     </div>
+    {% if demo_mode %}
+    <p class="note">In the demo these are locally generated placeholders. In a real
+      installation they are loaded from the manufacturer's own servers. Click to open
+      the full size; the downloadable file list is below.</p>
+    {% else %}
     <p class="note">Images are loaded from {{ brand_names.get(p.brand, p.brand) }}'s own
       servers, so an internet connection is needed to view them. Click to open the full
       size; the downloadable file list is below.</p>
+    {% endif %}
   </section>
   {% endif %}
 

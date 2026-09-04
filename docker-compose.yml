@@ -8,7 +8,7 @@
 services:
   catalogue:
     build: .
-    image: enda-catalogue-db
+    image: candela
     ports:
       # Override the host port if 8000 is taken:  HOST_PORT=8080 docker compose up
       - "${HOST_PORT:-8000}:8000"

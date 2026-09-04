@@ -2,7 +2,7 @@
 # The app listens on 127.0.0.1:8000; Caddy is the only door to the outside.
 # Certificates are obtained from Let's Encrypt and renewed automatically.
 
-catalogue.example.com {
+candela.example.com {
 	encode zstd gzip
 
 	# Authentication lives in the application itself (web/auth.py) — no basic auth here.

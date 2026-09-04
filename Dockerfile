@@ -1,4 +1,4 @@
-# Catalogue — container image
+# Candela — container image
 #
 # Deliberately does NOT install Playwright/Chromium (~400 MB). That is only needed
 # by etl/fetch_trilux.py, which downloads from a manufacturer portal; inside the
@@ -26,10 +26,10 @@ COPY run.sh README.md LICENSE ./
 
 RUN chmod +x docker/entrypoint.sh \
  && mkdir -p data \
- && useradd --create-home --uid 10001 catalogue \
- && chown -R catalogue:catalogue /app
+ && useradd --create-home --uid 10001 candela \
+ && chown -R candela:candela /app
 
-USER catalogue
+USER candela
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \

@@ -1,4 +1,4 @@
-# ENDA — Product and Document Catalogue
+# Candela — Product and Document Catalogue
 
 A catalogue search tool for lighting distributors. It ingests **BMEcat 2005 / ETIM**
 product data together with PDF documents and builds a single **SQLite** database with
@@ -20,8 +20,8 @@ it into a searchable database in about a minute.
 Or run your own copy in one command:
 
 ```bash
-git clone https://github.com/Maria-Ftaieh/enda-catalogue-db.git
-cd enda-catalogue-db
+git clone https://github.com/Maria-Ftaieh/candela-catalogue.git
+cd candela-catalogue
 docker compose up
 ```
 
@@ -105,8 +105,8 @@ product series each document covers:
 
 ![Administration](docs/admin.png)
 
-> The screenshots show real catalogue rows from a TRILUX feed, prices included. They
-> are illustrative only; see [About the prices](#about-the-prices).
+> The screenshots are taken from the live demo, so everything in them — the brand,
+> the article numbers, the prices and the documents — is fictional.
 
 ---
 
@@ -259,7 +259,7 @@ python3 -c "import sqlite3; sqlite3.connect(':memory:').execute('create virtual 
 ### 2. Get the code and create the virtualenv
 
 ```bash
-git clone <repository-url> enda && cd enda
+git clone <repository-url> candela && cd candela
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip
 .venv/bin/pip install -r requirements.txt
@@ -380,7 +380,7 @@ script makes **at most one** login attempt per run and **stops itself after two
 consecutive failures**, refusing to try again until `--reset` is passed. It therefore
 cannot lock the account.
 
-For monthly runs use `examples/enda-update.{service,timer}`. This automation is
+For monthly runs use `examples/candela-update.{service,timer}`. This automation is
 **TRILUX-specific**; every manufacturer portal differs, so other brands' files are
 copied in by hand.
 
@@ -411,8 +411,8 @@ The application only listens on `127.0.0.1`; the reverse proxy is the door to th
 outside.
 
 ```bash
-cp examples/enda.service /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now enda
+cp examples/candela.service /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now candela
 
 dnf install -y caddy
 cp examples/Caddyfile.example /etc/caddy/Caddyfile   # edit the domain

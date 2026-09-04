@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Product and document catalogue — web search interface.
+"""Candela — product and document catalogue, web search interface.
 
 Run with:
     ./run.sh
@@ -67,7 +67,7 @@ DEMO_MODE = os.environ.get("DEMO_MODE", "").lower() not in ("", "0", "false", "n
 DEMO_USER = os.environ.get("DEMO_USER", "demo")
 DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD", "demo1234demo")
 
-app = FastAPI(title="Catalogue", docs_url="/api/docs", redoc_url=None)
+app = FastAPI(title="Candela", docs_url="/api/docs", redoc_url=None)
 app.mount("/static", StaticFiles(directory=os.path.join(WEB, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(WEB, "templates"))
 

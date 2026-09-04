@@ -1,4 +1,4 @@
-# /etc/systemd/system/enda-update.timer
+# /etc/systemd/system/candela-update.timer
 [Unit]
 Description=Check for a new data package once a month
 
