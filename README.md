@@ -53,6 +53,7 @@ two); later starts reuse the volume and are immediate. If port 8000 is taken:
 
 - [Try it](#try-it)
 - [What it does](#what-it-does)
+- [Where it runs](#where-it-runs)
 - [Input: what data it accepts](#input-what-data-it-accepts)
 - [Output: the database you get](#output-the-database-you-get)
 - [Installation](#installation)
@@ -107,6 +108,36 @@ product series each document covers:
 
 > The screenshots are taken from the live demo, so everything in them — the brand,
 > the article numbers, the prices and the documents — is fictional.
+
+---
+
+## Where it runs
+
+Candela was written for **ENDA**, a lighting distributor in Turkey, and runs there as
+the internal catalogue for the TRILUX range they represent. That installation is the
+reason the project exists: every feature was built against a real feed and real daily
+use, not designed speculatively.
+
+What the production instance carries today:
+
+| | |
+|---|---|
+| Products | 30,736 |
+| ETIM technical attributes | 2,957,937 |
+| Asset links (data sheets, photometry, images) | 723,900 |
+| Accessory and similar-product relations | 682,997 |
+| Local PDF documents | 45 |
+| Catalogue ↔ product links | 406, covering 84% of products |
+| Database | one SQLite file, ~1.06 GB |
+
+It serves a Turkish-language build of this same code over HTTPS with per-person
+accounts, and picks up TRILUX's new price list by itself on the 5th of each month —
+downloading it through the manufacturer portal, rebuilding the database and relinking
+the catalogues without anyone touching the server.
+
+That instance is not public: it holds the manufacturer's gross price list, which is
+licensed for dealers in a specific market. The [demo](#try-it) is the same code with
+fictional data.
 
 ---
 
