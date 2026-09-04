@@ -17,15 +17,15 @@ it into a searchable database in about a minute.
 
 **Live demo: <https://demo.mariaftaieh.com>** — sign in with `demo` / `demo1234demo`.
 
-Or run your own copy in one command:
+Or run the same demo locally:
 
 ```bash
 git clone https://github.com/Maria-Ftaieh/candela-catalogue.git
 cd candela-catalogue
-docker compose up
+docker compose -f docker-compose.demo.yml up
 ```
 
-Then open <http://localhost:8000> and sign in with the same credentials.
+Then open <http://localhost:8000> with the same credentials.
 
 Both are filled with a **completely fictional** dataset — an invented brand
 ("Lumina Demo"), 96 products across 8 made-up series, generated PDFs and placeholder
@@ -37,13 +37,9 @@ python3 examples/demo_data.py          # write brands/demo/ and the placeholder 
 python3 examples/demo_data.py --clean  # remove them again
 ```
 
-The first container start generates the data and builds the database (a minute or
-two); later starts reuse the volume and are immediate. If port 8000 is taken:
-`HOST_PORT=8080 docker compose up`.
-
-> The image deliberately leaves out Playwright/Chromium (~400 MB), so the automatic
-> download in `etl/fetch_trilux.py` does not work inside the container. Everything
-> else does.
+> This is the **demo** compose file: fictional data, published credentials and
+> account changes disabled. To actually deploy Candela, use
+> [`docker-compose.yml`](#option-a-docker-recommended) instead.
 
 ![Search results](docs/search.png)
 
@@ -57,6 +53,8 @@ two); later starts reuse the volume and are immediate. If port 8000 is taken:
 - [Input: what data it accepts](#input-what-data-it-accepts)
 - [Output: the database you get](#output-the-database-you-get)
 - [Installation](#installation)
+  - [Docker (recommended)](#option-a-docker-recommended)
+  - [Native install](#option-b-native-install)
 - [Running it](#running-it)
 - [Adding a brand](#adding-a-brand)
 - [Automatic data updates](#automatic-data-updates)
@@ -267,10 +265,54 @@ ORDER BY bm25(product_fts) LIMIT 20;
 
 ## Installation
 
-The quickest path is [Docker](#try-it) above. What follows is a native install.
+Two supported paths. **Docker is the recommended one for a real deployment**; the
+native install is there if you would rather not use containers.
 
-Tested on **AlmaLinux 10** with Python 3.12. Package names differ on Debian/Ubuntu;
-everything else is the same.
+### Option A: Docker (recommended)
+
+```bash
+git clone https://github.com/Maria-Ftaieh/candela-catalogue.git
+cd candela-catalogue
+
+# 1. Put your data in place (see brands/README.md)
+mkdir -p brands/trilux/data brands/trilux/documents/Catalogue
+echo '{"name": "TRILUX"}' > brands/trilux/brand.json
+#    ... copy the BMEcat XML into brands/trilux/data/
+#    ... copy the PDFs into brands/trilux/documents/<Category>/
+
+# 2. Start it
+docker compose up -d
+
+# 3. Read the generated administrator password
+docker compose logs | grep -A4 "First administrator"
+```
+
+The first start builds the database from whatever is under `brands/`; a full
+manufacturer catalogue takes a few minutes. Later starts reuse the volume and are
+immediate. If `brands/` is empty the container says so and stops rather than serving
+an empty catalogue.
+
+| Setting | Meaning |
+|---|---|
+| `ADMIN_USER` | first administrator's username (default `admin`) |
+| `ADMIN_PASSWORD` | leave empty and one is generated and printed once |
+| `HOST_PORT` | host port, default 8000 |
+| `WITH_BROWSER=1` | build with Playwright + Chromium (~400 MB) so the container can run `etl/fetch_trilux.py` itself |
+
+The container publishes on `127.0.0.1` only; put a reverse proxy in front for TLS
+(see [Server deployment](#server-deployment-https)). Your source data is bind-mounted
+from `./brands`, the database lives in a named volume, and neither the demo dataset
+nor demo mode is involved.
+
+To rebuild after dropping in a new data package:
+
+```bash
+docker compose exec candela python etl/fetch_trilux.py --rebuild   # needs WITH_BROWSER=1
+# or, having replaced the files under brands/ by hand:
+docker compose exec candela sh -c "rm data/catalogue.db" && docker compose restart
+```
+
+### Option B: native install
 
 ### 1. Requirements
 
@@ -438,8 +480,10 @@ self-registration.
 
 ## Server deployment (HTTPS)
 
-The application only listens on `127.0.0.1`; the reverse proxy is the door to the
-outside.
+Whether you run it with Docker or natively, the application only listens on
+`127.0.0.1`; the reverse proxy is the door to the outside. The systemd units below are
+for the native install — with Docker, `restart: unless-stopped` already covers it and
+you only need the proxy.
 
 ```bash
 cp examples/candela.service /etc/systemd/system/
@@ -517,9 +561,10 @@ price fields in `etl/build_db.py` and rebuild.
 ## Project layout
 
 ```
-Dockerfile           container image (no Playwright, see "Try it")
-docker-compose.yml   one-command demo
-docker/entrypoint.sh generates demo data, builds the database, creates the first admin
+Dockerfile             container image; WITH_BROWSER=1 adds Playwright
+docker-compose.yml     production deployment
+docker-compose.demo.yml the public/local demo
+docker/entrypoint.sh   builds the database and creates the first administrator
 etl/
   brands.py          discovers the brand directories (used by all three ETL scripts)
   schema.sql         table definitions

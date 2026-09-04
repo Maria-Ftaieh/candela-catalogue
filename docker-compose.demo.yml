@@ -1,0 +1,30 @@
+# Public/local demo — fictional data, nothing real.
+#
+#   docker compose -f docker-compose.demo.yml up
+#
+# Then open http://localhost:8000 and sign in with demo / demo1234demo.
+# The first start generates the demo dataset and builds the database.
+#
+# This is NOT the production setup; see docker-compose.yml for that.
+
+services:
+  candela-demo:
+    build: .
+    image: candela
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      # Generate and load the fictional demo dataset
+      DEMO: "1"
+      # Publish the credentials on the sign-in page and refuse account changes,
+      # so a visitor cannot lock the demo for everyone.
+      DEMO_MODE: "1"
+      ADMIN_USER: "demo"
+      ADMIN_PASSWORD: "demo1234demo"
+    volumes:
+      # Demo data is disposable: keep it in a volume, not in your working copy.
+      - candela-demo-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  candela-demo-data:

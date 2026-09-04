@@ -1,30 +1,41 @@
-# Try it in one command:
-#     docker compose up
-# then open http://localhost:8000 and sign in with demo / demo1234demo
+# Production deployment.
 #
-# The first start generates a fictional demo dataset and builds the database,
-# which takes a minute or two. Later starts reuse the volume and are instant.
+#   1. Put your BMEcat XML and PDFs under brands/<code>/  (see brands/README.md)
+#   2. docker compose up -d
+#   3. Read the generated administrator password from the logs
+#
+# The first start builds the database from whatever is in brands/, which for a full
+# manufacturer catalogue takes a couple of minutes. Later starts reuse the volume.
+#
+# Just want to look at it? Use the demo instead:
+#   docker compose -f docker-compose.demo.yml up
 
 services:
-  catalogue:
-    build: .
+  candela:
+    build:
+      context: .
+      args:
+        # Set to 1 to include Playwright + Chromium (~400 MB) so that
+        # etl/fetch_trilux.py can download from the manufacturer portal.
+        WITH_BROWSER: "${WITH_BROWSER:-0}"
     image: candela
     ports:
-      # Override the host port if 8000 is taken:  HOST_PORT=8080 docker compose up
-      - "${HOST_PORT:-8000}:8000"
+      # Only bind to localhost; put a reverse proxy in front for TLS.
+      - "127.0.0.1:${HOST_PORT:-8000}:8000"
     environment:
-      # Generate and load the fictional demo dataset
-      DEMO: "1"
-      # Shows the credentials on the sign-in page and disables account changes.
-      # Turn this off for a real installation.
-      DEMO_MODE: "1"
-      ADMIN_USER: "demo"
-      ADMIN_PASSWORD: "demo1234demo"
+      # First administrator. Leave the password empty and one is generated and
+      # printed once in the logs; either way it must be changed on first sign-in.
+      ADMIN_USER: "${ADMIN_USER:-admin}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
     volumes:
-      # The database is rebuilt from the source data, but keeping it means the
-      # container does not have to rebuild on every start.
-      - catalogue-data:/app/data
+      # Your source data. Must be writable by uid 10001 if you want the container
+      # to run etl/fetch_trilux.py itself (needs WITH_BROWSER=1).
+      - ./brands:/app/brands
+      # The generated database. A named volume avoids host permission problems.
+      - candela-data:/app/data
+      # Manufacturer portal credentials, if you use the automatic download:
+      # - /etc/trilux:/etc/trilux:ro
     restart: unless-stopped
 
 volumes:
-  catalogue-data:
+  candela-data:
